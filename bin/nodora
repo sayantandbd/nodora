@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -e
+
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NODORA_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Source configurations and utilities
+source "$NODORA_ROOT/src/config.sh"
+source "$NODORA_ROOT/src/utils/logger.sh"
+source "$NODORA_ROOT/src/utils/system.sh"
+
+show_help() {
+  echo "Nodora CLI v$NODORA_VERSION"
+  echo "========================================="
+  echo "Usage: nodora <command> [options]"
+  echo ""
+  echo "Commands:"
+  echo "  add <project> <domain> [entry_file] [port]   Add a new Node.js project"
+  echo "  list                                         List running servers and project directories"
+  echo "  restart                                      Restart all PM2 apps and Caddy server"
+  echo "  update                                       Update Nodora CLI to the latest version"
+  echo "  -v, --version                                Show version"
+  echo "  help                                         Show this help message"
+  echo "========================================="
+}
+
+COMMAND=$1
+
+case "$COMMAND" in
+  -v|--version)
+    echo "Nodora version $NODORA_VERSION"
+    ;;
+  list)
+    source "$NODORA_ROOT/src/commands/list.sh"
+    ;;
+  restart)
+    source "$NODORA_ROOT/src/commands/restart.sh"
+    ;;
+  update)
+    source "$NODORA_ROOT/src/commands/update.sh"
+    ;;
+  add)
+    shift
+    source "$NODORA_ROOT/src/commands/add.sh" "$@"
+    ;;
+  *)
+    show_help
+    ;;
+esac

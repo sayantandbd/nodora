@@ -2,8 +2,9 @@
 
 Nodora is an automated shell scripting tool to instantly provision a production-ready Node.js environment on an Ubuntu server. It automatically configures Caddy as a reverse proxy, PM2 for process management, sets up a default landing page, and prepares GitLab Runner for CI/CD.
 
-## Tech Stacks / Server Stacks
+## Tech Stacks / Security
 - **OS**: Ubuntu Linux
+- **Security**: Node.js apps and PM2 are run under a dedicated, unprivileged `nodora` user to prevent root-level exploits.
 - **Web Server / Reverse Proxy**: [Caddy](https://caddyserver.com/) (Auto HTTPS)
 - **Runtime**: Node.js (Latest LTS)
 - **Process Manager**: PM2
@@ -45,8 +46,8 @@ To automatically ready your containers or VMs upon boot in AWS, DigitalOcean, or
 curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/install.sh | bash
 
 # Optionally, auto-add your first project
-# nodora add <project_name> <domain> <port>
-nodora add default-app default.local 3000
+# nodora add <project_name> <domain> [entry_file] [port]
+nodora add default-app default.local index.js 3000
 ```
 
 ## Nodora CLI Commands
@@ -57,7 +58,7 @@ The installation automatically installs the `nodora` CLI globally. Run `nodora` 
 
 | Command | Arguments | Description |
 |---------|-----------|-------------|
-| `nodora add` | `<project> <domain> <port>` | Adds a new Node.js project. Uses `default-app default.local 3000` if omitted. |
+| `nodora add` | `<project> <domain> [entry_file] [port]` | Adds a new Node.js project. Uses `index.js` and auto-assigns port if omitted. |
 | `nodora list` | | Lists running PM2 apps and project directories. |
 | `nodora restart` | | Restarts all PM2 apps and the Caddy web server. |
 | `nodora update` | | Updates the Nodora CLI to the latest version from GitHub. |
@@ -65,14 +66,15 @@ The installation automatically installs the `nodora` CLI globally. Run `nodora` 
 
 ### Adding a New Project Example
 
-When you add a project via `nodora add my-api api.example.com 3000`, Nodora will:
-1. Create a project folder at `/var/www/projects/<project_name>`.
-2. Generate an `ecosystem.config.js` for PM2.
-3. Automatically configure Caddy and reload the web server to start routing traffic to your app.
+When you add a project via `nodora add my-api api.example.com` (omitting the entry file and port), Nodora will:
+1. Create a 100% empty project folder at `/var/www/projects/<project_name>`, ready for `git clone`.
+2. Find the highest port currently in use and auto-assign the next available port.
+3. Generate a centralized PM2 config file at `/var/www/projects/ecosystems/<project_name>.config.js`.
+4. Automatically configure Caddy and reload the web server to start routing traffic.
 
 ## GitLab Runner CI/CD Integration
 
-Nodora pre-installs GitLab Runner. To set up CI/CD deployments for a specific project, follow these beginner-friendly steps:
+Nodora pre-installs GitLab Runner and automatically configures it to securely run jobs as the `nodora` user. To set up CI/CD deployments for a specific project, follow these beginner-friendly steps:
 
 1. **Get your Registration Token:**
    - Go to your project repository on GitLab.
@@ -105,7 +107,7 @@ Nodora pre-installs GitLab Runner. To set up CI/CD deployments for a specific pr
        - cd /var/www/projects/my-api
        - git pull origin main
        - npm install
-       - pm2 restart ecosystem.config.js
+       - pm2 restart /var/www/projects/ecosystems/my-api.config.js
      only:
        - main
    ```
@@ -113,8 +115,17 @@ Nodora pre-installs GitLab Runner. To set up CI/CD deployments for a specific pr
 
 ## File Structure
 
-- `/var/www/projects`: Default base directory for all projects.
+### Project File Structure
+- `/var/www/projects`: Default base directory for all Node.js projects.
+- `/var/www/projects/ecosystems/*.config.js`: Centralized PM2 configuration files.
 - `/var/www/projects/logs`: Centralized directory for PM2 out/error logs.
 - `/etc/caddy/Caddyfile.d/*.caddy`: Individual Caddy configuration files for each domain.
+
+### Nodora Source Code Structure (`/opt/nodora`)
+- `bin/nodora`: Main executable wrapper.
+- `src/commands/*.sh`: Modular logic for CLI subcommands (`add`, `list`, `restart`, `update`).
+- `src/utils/*.sh`: Reusable helper scripts (e.g. loggers, port generators).
+- `src/config.sh`: Centralized constants and variables.
+
 - `/var/www/html/index.html`: Default landing page when accessed via IP.
 - `/var/www/projects/installation.txt`: A reference file created during installation containing your setup details and login info.

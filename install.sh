@@ -86,10 +86,26 @@ else
   echo "Caddy is already installed. Skipping..."
 fi
 
-# 5. Directory Setup
+# 5. User & Directory Setup
+echo "Creating nodora user..."
+if ! id "nodora" &>/dev/null; then
+  useradd -m -s /bin/bash nodora
+fi
+
+echo "Reconfiguring GitLab Runner to run as the nodora user..."
+gitlab-runner uninstall || true
+gitlab-runner install --user=nodora --working-directory=/home/nodora || true
+systemctl restart gitlab-runner || true
+
 echo "Setting up base directories..."
 mkdir -p "$BASE_DIR"
 mkdir -p "$BASE_DIR/logs"
+mkdir -p "$BASE_DIR/ecosystems"
+chown -R nodora:nodora "$BASE_DIR"
+
+echo "Configuring PM2 to start on boot for nodora user..."
+pm2 startup systemd -u nodora --hp /home/nodora || true
+sudo -u nodora pm2 save
 
 # 6. Caddy Config & Default Site
 echo "Creating default HTML page..."
@@ -134,17 +150,20 @@ EOF
 systemctl reload caddy || true # Might fail if Caddy isn't fully started yet
 
 # 7. Install Nodora CLI
-if [ -f "./add_project.sh" ]; then
-  echo "Installing nodora CLI from local file..."
-  cp ./add_project.sh /usr/local/bin/nodora
-  chmod +x /usr/local/bin/nodora
-  echo "Nodora CLI installed successfully."
+echo "Downloading and installing Nodora CLI via git clone..."
+if [ -d "/opt/nodora" ]; then
+  echo "Existing installation found. Updating..."
+  cd /opt/nodora && git pull origin main
 else
-  echo "Downloading nodora CLI from GitHub..."
-  curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/add_project.sh -o /usr/local/bin/nodora
-  chmod +x /usr/local/bin/nodora
-  echo "Nodora CLI installed successfully."
+  git clone https://github.com/sayantandbd/nodora.git /opt/nodora
 fi
+
+# Ensure bin is executable
+chmod +x /opt/nodora/bin/nodora
+
+# Create symlink
+ln -sf /opt/nodora/bin/nodora /usr/local/bin/nodora
+echo "Nodora CLI installed successfully."
 
 # 8. Documentation Output
 INSTALL_TXT="$BASE_DIR/installation.txt"
