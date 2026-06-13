@@ -135,12 +135,15 @@ systemctl reload caddy || true # Might fail if Caddy isn't fully started yet
 
 # 7. Install Nodora CLI
 if [ -f "./add_project.sh" ]; then
-  echo "Installing nodora CLI..."
+  echo "Installing nodora CLI from local file..."
   cp ./add_project.sh /usr/local/bin/nodora
   chmod +x /usr/local/bin/nodora
   echo "Nodora CLI installed successfully."
 else
-  echo "Warning: add_project.sh not found, could not install nodora CLI."
+  echo "Downloading nodora CLI from GitHub..."
+  curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/add_project.sh -o /usr/local/bin/nodora
+  chmod +x /usr/local/bin/nodora
+  echo "Nodora CLI installed successfully."
 fi
 
 # 8. Documentation Output
@@ -163,7 +166,7 @@ Installed Versions:
 
 Getting Started & First Login:
 1. Access your server: ssh root@<your-server-ip>
-2. Add a new project by running: nodora <project_name> <domain> <port>
+2. Add a new project by running: nodora add <project_name> <domain> <port>
 3. Your default web page is live at: http://<your-server-ip>/
 
 GitLab Runner Registration:
@@ -172,5 +175,6 @@ EOF
 
 echo "========================================="
 echo "  Setup Complete!  "
-echo "  Check $INSTALL_TXT for details."
+echo "========================================="
+cat "$INSTALL_TXT"
 echo "========================================="

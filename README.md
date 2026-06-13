@@ -15,19 +15,24 @@ Nodora is an automated shell scripting tool to instantly provision a production-
 
 ## Getting Started
 
-You can install Nodora directly via `curl`. By default, this sets up a 4GB swap file.
+Nodora requires elevated privileges to provision the server. You must switch to the `root` user or use a root shell before running the installation.
 
 ### Direct Installation (Recommended)
 
-Run the following command to download and execute the installation script in one step:
+First, switch to a root shell:
+```bash
+sudo -s
+```
+
+Then, run the following command to download and execute the installation script in one step (this sets up a 4GB swap file by default):
 
 ```bash
-curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/install.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/install.sh | bash
 ```
 
 *Note: You can pass a custom swap size (in GB) as an argument. For example, to set a 2GB swap size:*
 ```bash
-curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/install.sh | sudo bash -s -- 2
+curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/install.sh | bash -s -- 2
 ```
 
 ## Cloud Provider Setup (User Data / Cloud-Init)
@@ -40,28 +45,27 @@ To automatically ready your containers or VMs upon boot in AWS, DigitalOcean, or
 curl -sL https://raw.githubusercontent.com/sayantandbd/nodora/main/install.sh | bash
 
 # Optionally, auto-add your first project
-# nodora <project_name> <domain> <port>
-nodora default-app default.local 3000
+# nodora add <project_name> <domain> <port>
+nodora add default-app default.local 3000
 ```
 
-## Adding a New Project
+## Nodora CLI Commands
 
-The installation automatically installs the `nodora` CLI globally. You can easily add new Node.js apps and route domains without manual configuration.
+The installation automatically installs the `nodora` CLI globally. Run `nodora` without arguments to see the help menu.
 
-Run the `nodora` command with your project details:
+*Note: You must run these commands as root (e.g., using `sudo` or after running `sudo -s`).*
 
-```bash
-sudo nodora <project_name> <domain_name> <internal_port>
-```
+| Command | Arguments | Description |
+|---------|-----------|-------------|
+| `nodora add` | `<project> <domain> <port>` | Adds a new Node.js project. Uses `default-app default.local 3000` if omitted. |
+| `nodora list` | | Lists running PM2 apps and project directories. |
+| `nodora restart` | | Restarts all PM2 apps and the Caddy web server. |
+| `nodora update` | | Updates the Nodora CLI to the latest version from GitHub. |
+| `nodora -v` | | Displays the installed Nodora version. |
 
-**Example:**
-```bash
-sudo nodora my-api api.example.com 3000
-```
+### Adding a New Project Example
 
-*If you run `nodora` without arguments, it will use defaults (`default-app`, `default.local`, `3000`).*
-
-When executed, Nodora will:
+When you add a project via `nodora add my-api api.example.com 3000`, Nodora will:
 1. Create a project folder at `/var/www/projects/<project_name>`.
 2. Generate an `ecosystem.config.js` for PM2.
 3. Automatically configure Caddy and reload the web server to start routing traffic to your app.
