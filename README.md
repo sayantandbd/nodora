@@ -10,6 +10,10 @@ Nodora is an automated shell scripting tool to instantly provision a production-
 - **Process Manager**: PM2
 - **CI/CD**: GitLab Runner
 
+## Architecture & Privileges
+- **No Conflicts with Caddy**: Caddy operates as an independent system service (binding to ports 80 and 443) and acts as a reverse proxy. Your Node.js apps, managed by PM2 under your user account, bind to unprivileged internal ports (e.g., `3000`). Caddy smoothly forwards traffic to these local ports without any permission conflicts.
+- **Sudo & Root Execution**: Nodora commands strictly require `root` privileges. Running commands with `sudo` enables Nodora to seamlessly configure system files (like Caddyfiles). Whenever Nodora needs to interact with your Node.js apps or PM2, it securely drops privileges to act on behalf of your logged-in user automatically, requiring no extra password prompts.
+
 ## Prerequisites
 - A freshly provisioned server running Ubuntu.
 - Root or `sudo` privileges.
