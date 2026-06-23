@@ -25,6 +25,10 @@ echo "Ubuntu detected. Proceeding..."
 SWAP_SIZE=${1:-4}
 echo "Using swap size: ${SWAP_SIZE}GB"
 
+TARGET_USER=${SUDO_USER:-root}
+TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
+echo "Running on behalf of user: $TARGET_USER"
+
 BASE_DIR="/var/www/projects"
 echo "Projects will be stored in: $BASE_DIR"
 
@@ -87,25 +91,20 @@ else
 fi
 
 # 5. User & Directory Setup
-echo "Creating nodora user..."
-if ! id "nodora" &>/dev/null; then
-  useradd -m -s /bin/bash nodora
-fi
-
-echo "Reconfiguring GitLab Runner to run as the nodora user..."
+echo "Reconfiguring GitLab Runner to run as the $TARGET_USER user..."
 gitlab-runner uninstall || true
-gitlab-runner install --user=nodora --working-directory=/home/nodora || true
+gitlab-runner install --user=$TARGET_USER --working-directory=$TARGET_HOME || true
 systemctl restart gitlab-runner || true
 
 echo "Setting up base directories..."
 mkdir -p "$BASE_DIR"
 mkdir -p "$BASE_DIR/logs"
 mkdir -p "$BASE_DIR/ecosystems"
-chown -R nodora:nodora "$BASE_DIR"
+chown -R $TARGET_USER:$TARGET_USER "$BASE_DIR"
 
-echo "Configuring PM2 to start on boot for nodora user..."
-pm2 startup systemd -u nodora --hp /home/nodora || true
-sudo -u nodora pm2 save
+echo "Configuring PM2 to start on boot for $TARGET_USER user..."
+pm2 startup systemd -u $TARGET_USER --hp $TARGET_HOME || true
+sudo -u $TARGET_USER pm2 save
 
 # 6. Caddy Config & Default Site
 echo "Creating default HTML page..."

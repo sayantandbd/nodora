@@ -19,6 +19,7 @@ log_info "Using Internal Port: $PROJ_PORT"
 
 PROJ_DIR="$BASE_DIR/$PROJ_NAME"
 ECOSYSTEM_DIR="$BASE_DIR/ecosystems"
+TARGET_USER=${SUDO_USER:-root}
 
 log_info "Creating project directory at $PROJ_DIR..."
 mkdir -p "$PROJ_DIR"
@@ -52,8 +53,8 @@ else
 fi
 
 # Set ownership
-chown -R nodora:nodora "$PROJ_DIR"
-chown -R nodora:nodora "$ECOSYSTEM_DIR"
+chown -R $TARGET_USER:$TARGET_USER "$PROJ_DIR"
+chown -R $TARGET_USER:$TARGET_USER "$ECOSYSTEM_DIR"
 
 # Caddy setup
 CADDY_FILE="/etc/caddy/Caddyfile.d/$DOMAIN_NAME.caddy"
@@ -76,5 +77,5 @@ echo "  Entry File: $ENTRY_FILE"
 echo "  "
 echo "  Next steps:"
 echo "  1. Add your code to $PROJ_DIR (e.g. git clone <repo> .)"
-echo "  2. Start PM2: sudo -u nodora pm2 start $ECOSYSTEM_FILE && sudo -u nodora pm2 save"
+echo "  2. Start PM2: sudo -u $TARGET_USER pm2 start $ECOSYSTEM_FILE && sudo -u $TARGET_USER pm2 save"
 echo "========================================="

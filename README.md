@@ -4,7 +4,7 @@ Nodora is an automated shell scripting tool to instantly provision a production-
 
 ## Tech Stacks / Security
 - **OS**: Ubuntu Linux
-- **Security**: Node.js apps and PM2 are run under a dedicated, unprivileged `nodora` user to prevent root-level exploits.
+- **Security**: Node.js apps and PM2 are run under the user who runs the installation script (instead of root) to prevent root-level exploits.
 - **Web Server / Reverse Proxy**: [Caddy](https://caddyserver.com/) (Auto HTTPS)
 - **Runtime**: Node.js (Latest LTS)
 - **Process Manager**: PM2
@@ -74,7 +74,7 @@ When you add a project via `nodora add my-api api.example.com` (omitting the ent
 
 ## GitLab Runner CI/CD Integration
 
-Nodora pre-installs GitLab Runner and automatically configures it to securely run jobs as the `nodora` user. To set up CI/CD deployments for a specific project, follow these beginner-friendly steps:
+Nodora pre-installs GitLab Runner and automatically configures it to securely run jobs as the installing user. To set up CI/CD deployments for a specific project, follow these beginner-friendly steps:
 
 1. **Get your Registration Token:**
    - Go to your project repository on GitLab.
