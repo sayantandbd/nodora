@@ -8,7 +8,7 @@ require_root() {
 }
 
 get_next_available_port() {
-  local highest_port=$(grep -oP 'localhost:\K\d+' /etc/caddy/Caddyfile.d/*.caddy 2>/dev/null | sort -n | tail -n 1 || echo "")
+  local highest_port=$(grep -hoP 'localhost:\K\d+' /etc/caddy/Caddyfile.d/*.caddy 2>/dev/null | sort -n | tail -n 1 || echo "")
   if [ -z "$highest_port" ]; then
     echo 3000
   else
